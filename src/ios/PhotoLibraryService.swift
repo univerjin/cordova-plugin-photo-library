@@ -105,6 +105,11 @@ final class PhotoLibraryService {
     }
 
     func getLibrary(_ options: PhotoLibraryGetLibraryOptions, completion: @escaping (_ result: [NSDictionary], _ chunkNum: Int, _ isLastChunk: Bool) -> Void) {
+        
+        var formatPredicate:NSPredicate!
+        var datePredicate:NSPredicate!
+        let startTime:NSDate = NSDate(timeIntervalSince1970: options.startTime / 1000)
+        let endTime:NSDate = NSDate(timeIntervalSince1970: options.endTime / 1000)
 
         if(options.includeCloudData == false) {
             if #available(iOS 9.0, *) {
@@ -115,25 +120,25 @@ final class PhotoLibraryService {
         
         // let fetchResult = PHAsset.fetchAssets(with: .image, options: self.fetchOptions)
         if(options.includeImages == true && options.includeVideos == true) {
-            fetchOptions.predicate = NSPredicate(format: "mediaType == %d || mediaType == %d",
+            formatPredicate = NSPredicate(format: "mediaType == %d || mediaType == %d",
                                                  PHAssetMediaType.image.rawValue,
                                                  PHAssetMediaType.video.rawValue)
         }
         else {
             if(options.includeImages == true) {
-                fetchOptions.predicate = NSPredicate(format: "mediaType == %d",
+                formatPredicate = NSPredicate(format: "mediaType == %d",
                                                      PHAssetMediaType.image.rawValue)
             }
             else if(options.includeVideos == true) {
-                fetchOptions.predicate = NSPredicate(format: "mediaType == %d",
+                formatPredicate = NSPredicate(format: "mediaType == %d",
                                                      PHAssetMediaType.video.rawValue)
             }
         }
+        datePredicate = NSPredicate(format: "creationDate >= %@ and creationDate <= %@", startTime, endTime)
+        fetchOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [formatPredicate, datePredicate])
         
         let fetchResult = PHAsset.fetchAssets(with: fetchOptions)
 
-
-        
 	// TODO: do not restart caching on multiple calls
 //        if fetchResult.count > 0 {
 //
@@ -509,7 +514,7 @@ final class PhotoLibraryService {
         do {
             sourceData = try getDataFromURL(url)
         } catch {
-            completion(nil, "\(String(describing: error))")
+            completion(nil, "\(error)")
             return
         }
 
@@ -519,7 +524,7 @@ final class PhotoLibraryService {
             assetsLibrary.writeImageData(toSavedPhotosAlbum: sourceData, metadata: nil) { (assetUrl: URL?, error: Error?) in
 
                 if error != nil {
-                    completion(nil, "Could not write image to album: \(String(describing: error))")
+                    completion(nil, "Could not write image to album: \(error)")
                     return
                 }
 
@@ -594,7 +599,7 @@ final class PhotoLibraryService {
             assetsLibrary.writeVideoAtPath(toSavedPhotosAlbum: videoURL) { (assetUrl: URL?, error: Error?) in
 
                 if error != nil {
-                    completion(nil, "Could not write video to album: \(String(describing: error))")
+                    completion(nil, "Could not write video to album: \(error)")
                     return
                 }
 
@@ -688,7 +693,7 @@ final class PhotoLibraryService {
             PhotoLibraryService.getAlPhotoAlbum(assetsLibrary, album: album, completion: { (alPhotoAlbum: ALAssetsGroup?, error: String?) in
 
                 if error != nil {
-                    completion("getting photo album caused error: \(String(describing: error))")
+                    completion("getting photo album caused error: \(error)")
                     return
                 }
 
@@ -698,7 +703,7 @@ final class PhotoLibraryService {
             })
 
         }, failureBlock: { (error: Error?) in
-            completion("Could not retrieve saved asset: \(String(describing: error))")
+            completion("Could not retrieve saved asset: \(error)")
         })
 
     }
@@ -771,7 +776,7 @@ final class PhotoLibraryService {
                 completion(photoAlbum, nil)
             }
             else {
-                completion(nil, "\(String(describing: error))")
+                completion(nil, "\(error)")
             }
         }
     }
@@ -800,5 +805,4 @@ final class PhotoLibraryService {
         })
 
     }
-
 }

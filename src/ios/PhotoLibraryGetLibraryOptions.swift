@@ -10,4 +10,6 @@ struct PhotoLibraryGetLibraryOptions {
     let includeAlbumData: Bool
     let includeCloudData: Bool
     let includeVideos: Bool
+    let startTime: Double
+    let endTime: Double
 }
