@@ -34,7 +34,7 @@ final class PhotoLibraryService {
     let dateFormatter: DateFormatter!
     let cachingImageManager: PHCachingImageManager!
 
-    let contentMode = PHImageContentMode.aspectFill // AspectFit: can be smaller, AspectFill - can be larger. TODO: resize to exact size
+    let contentMode = PHImageContentMode.aspectFit // AspectFit: can be smaller, AspectFill - can be larger. TODO: resize to exact size
 
     var cacheActive = false
 
