@@ -111,7 +111,7 @@ import Foundation
             getLibraryOptions,
             completion: {
                 (totalCount) in
-                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: totalCount as! [String])
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: totalCount)
                     self.commandDelegate!.send(pluginResult, callbackId: command.callbackId)
             }
         )

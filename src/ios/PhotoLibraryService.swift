@@ -104,7 +104,7 @@ final class PhotoLibraryService {
 
     }
     
-    func getLibraryCount (_ options: PhotoLibraryGetLibraryOptions, completion: @escaping (_ result: Int, _ chunkNum: Int, _ isLastChunk: Bool) -> Void) {
+    func getLibraryCount (_ options: PhotoLibraryGetLibraryOptions, completion: @escaping (_ totalCount: Int) -> Void) {
         
         var formatPredicate:NSPredicate!
         var datePredicate:NSPredicate!
@@ -138,7 +138,7 @@ final class PhotoLibraryService {
         fetchOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [formatPredicate, datePredicate])
         
         let fetchResult = PHAsset.fetchAssets(with: fetchOptions);
-        completion(fetchResult.count, 1, true);
+        completion(fetchResult.count);
     }
 
     func getLibrary(_ options: PhotoLibraryGetLibraryOptions, completion: @escaping (_ result: [NSDictionary], _ chunkNum: Int, _ isLastChunk: Bool) -> Void) {
