@@ -103,6 +103,43 @@ final class PhotoLibraryService {
         return PHPhotoLibrary.authorizationStatus() == .authorized
 
     }
+    
+    func getLibraryCount (_ options: PhotoLibraryGetLibraryOptions, completion: @escaping (_ result: Int, _ chunkNum: Int, _ isLastChunk: Bool) -> Void) {
+        
+        var formatPredicate:NSPredicate!
+        var datePredicate:NSPredicate!
+        let startTime:NSDate = NSDate(timeIntervalSince1970: options.startTime / 1000)
+        let endTime:NSDate = NSDate(timeIntervalSince1970: options.endTime / 1000)
+        
+        if(options.includeCloudData == false) {
+            if #available(iOS 9.0, *) {
+                // remove iCloud source type
+                fetchOptions.includeAssetSourceTypes = [.typeUserLibrary, .typeiTunesSynced]
+            }
+        }
+        
+        // let fetchResult = PHAsset.fetchAssets(with: .image, options: self.fetchOptions)
+        if(options.includeImages == true && options.includeVideos == true) {
+            formatPredicate = NSPredicate(format: "mediaType == %d || mediaType == %d",
+                                          PHAssetMediaType.image.rawValue,
+                                          PHAssetMediaType.video.rawValue)
+        }
+        else {
+            if(options.includeImages == true) {
+                formatPredicate = NSPredicate(format: "mediaType == %d",
+                                              PHAssetMediaType.image.rawValue)
+            }
+            else if(options.includeVideos == true) {
+                formatPredicate = NSPredicate(format: "mediaType == %d",
+                                              PHAssetMediaType.video.rawValue)
+            }
+        }
+        datePredicate = NSPredicate(format: "creationDate >= %@ and creationDate <= %@", startTime, endTime)
+        fetchOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [formatPredicate, datePredicate])
+        
+        let fetchResult = PHAsset.fetchAssets(with: fetchOptions);
+        completion(fetchResult.count, 1, true);
+    }
 
     func getLibrary(_ options: PhotoLibraryGetLibraryOptions, completion: @escaping (_ result: [NSDictionary], _ chunkNum: Int, _ isLastChunk: Bool) -> Void) {
         
@@ -137,7 +174,7 @@ final class PhotoLibraryService {
         datePredicate = NSPredicate(format: "creationDate >= %@ and creationDate <= %@", startTime, endTime)
         fetchOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [formatPredicate, datePredicate])
         
-        let fetchResult = PHAsset.fetchAssets(with: fetchOptions)
+        let fetchResult = PHAsset.fetchAssets(with: fetchOptions);
 
 	// TODO: do not restart caching on multiple calls
 //        if fetchResult.count > 0 {
