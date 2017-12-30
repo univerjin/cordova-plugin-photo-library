@@ -78,59 +78,43 @@ import Foundation
     }
     
     func getLibraryCount(_ command: CDVInvokedUrlCommand) {
-        concurrentQueue.async {
             
-            if !PhotoLibraryService.hasPermission() {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: PhotoLibraryService.PERMISSION_ERROR)
-                self.commandDelegate!.send(pluginResult, callbackId: command.callbackId)
-                return
-            }
-            
-            let service = PhotoLibraryService.instance
-            
-            let options = command.arguments[0] as! NSDictionary
-            
-            
-            let thumbnailWidth = options["thumbnailWidth"] as! Int
-            let thumbnailHeight = options["thumbnailHeight"] as! Int
-            let itemsInChunk = options["itemsInChunk"] as! Int
-            let chunkTimeSec = options["chunkTimeSec"] as! Double
-            let useOriginalFileNames = options["useOriginalFileNames"] as! Bool
-            let includeAlbumData = options["includeAlbumData"] as! Bool
-            let includeCloudData = options["includeCloudData"] as! Bool
-            let includeVideos = options["includeVideos"] as! Bool
-            let includeImages = options["includeImages"] as! Bool
-            let startTime = options["startTime"] as! Double
-            let endTime = options["endTime"] as! Double
-            
-            let getLibraryOptions = PhotoLibraryGetLibraryOptions(
-                thumbnailWidth: thumbnailWidth,
-                thumbnailHeight: thumbnailHeight,
-                itemsInChunk: itemsInChunk,
-                chunkTimeSec: chunkTimeSec,
-                useOriginalFileNames: useOriginalFileNames,
-                includeImages: includeImages,
-                includeAlbumData: includeAlbumData,
-                includeCloudData: includeCloudData,
-                includeVideos: includeVideos,
-                startTime: startTime,
-                endTime: endTime
-            );
-            service.getLibraryCount(
-                getLibraryOptions,
-                completion: {
-                    (totalCount, chunkNum, isLastChunk) in
-                        let result: NSDictionary = [
-                            "chunkNum": chunkNum,
-                            "isLastChunk": isLastChunk,
-                            "count": totalCount
-                        ];
-                        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: result as! [String: AnyObject])
-                        pluginResult!.setKeepCallbackAs(!isLastChunk)
-                        self.commandDelegate!.send(pluginResult, callbackId: command.callbackId)
-                }
-            )
+        if !PhotoLibraryService.hasPermission() {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: PhotoLibraryService.PERMISSION_ERROR)
+            self.commandDelegate!.send(pluginResult, callbackId: command.callbackId)
+            return
         }
+        
+        let service = PhotoLibraryService.instance
+        let options = command.arguments[0] as! NSDictionary
+        let includeAlbumData = options["includeAlbumData"] as! Bool
+        let includeCloudData = options["includeCloudData"] as! Bool
+        let includeVideos = options["includeVideos"] as! Bool
+        let includeImages = options["includeImages"] as! Bool
+        let startTime = options["startTime"] as! Double
+        let endTime = options["endTime"] as! Double
+        
+        let getLibraryOptions = PhotoLibraryGetLibraryOptions(
+            thumbnailWidth: 0,
+            thumbnailHeight: 0,
+            itemsInChunk: 0,
+            chunkTimeSec: 0,
+            useOriginalFileNames: false,
+            includeImages: includeImages,
+            includeAlbumData: includeAlbumData,
+            includeCloudData: includeCloudData,
+            includeVideos: includeVideos,
+            startTime: startTime,
+            endTime: endTime
+        );
+        service.getLibraryCount(
+            getLibraryOptions,
+            completion: {
+                (totalCount) in
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: totalCount as! [String])
+                    self.commandDelegate!.send(pluginResult, callbackId: command.callbackId)
+            }
+        )
     }
     
     func getAlbums(_ command: CDVInvokedUrlCommand) {
