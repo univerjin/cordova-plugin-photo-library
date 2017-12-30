@@ -44,7 +44,6 @@ photoLibrary.getLibrary = function (success, error, options) {
             success(result);
             done();
         }, options);
-
     });
 
     var chunksToProcess = []; // chunks are stored in its index
@@ -70,6 +69,67 @@ photoLibrary.getLibrary = function (success, error, options) {
         error,
         'PhotoLibrary',
         'getLibrary', [options]
+    );
+
+};
+
+photoLibrary.getLibraryCount = function (success, error, options) {
+
+    if (!options) {
+        options = {};
+    }
+
+    options = {
+        thumbnailWidth: options.thumbnailWidth || defaultThumbnailWidth,
+        thumbnailHeight: options.thumbnailHeight || defaultThumbnailHeight,
+        quality: options.quality || defaultQuality,
+        itemsInChunk: options.itemsInChunk || 0,
+        chunkTimeSec: options.chunkTimeSec || 0,
+        useOriginalFileNames: options.useOriginalFileNames || false,
+        includeImages: options.includeImages !== undefined ? options.includeImages : true,
+        includeAlbumData: options.includeAlbumData || false,
+        includeCloudData: options.includeCloudData !== undefined ? options.includeCloudData : true,
+        includeVideos: options.includeVideos || false,
+        startTime: options.startTime || 0,
+        endTime: options.endTime || Math.round(new Date().getTime())
+    };
+
+    // queue that keeps order of async processing
+    var q = async.queue(function(chunk, done) {
+
+        var library = chunk.library;
+        var isLastChunk = chunk.isLastChunk;
+
+        processLibrary(library, function(library) {
+            var result = { library: library, isLastChunk: isLastChunk };
+            success(result);
+            done();
+        }, options);
+    });
+
+    var chunksToProcess = []; // chunks are stored in its index
+    var currentChunkNum = 0;
+
+    cordova.exec(
+        function (chunk) {
+            // callbacks arrive from cordova.exec not in order, restoring the order here
+            if (chunk.chunkNum === currentChunkNum) {
+                // the chunk arrived in order
+                q.push(chunk);
+                currentChunkNum += 1;
+                while (chunksToProcess[currentChunkNum]) {
+                    q.push(chunksToProcess[currentChunkNum]);
+                    delete chunksToProcess[currentChunkNum];
+                    currentChunkNum += 1;
+                }
+            } else {
+                // the chunk arrived not in order
+                chunksToProcess[chunk.chunkNum] = chunk;
+            }
+        },
+        error,
+        'PhotoLibrary',
+        'getLibraryCount', [options]
     );
 
 };
